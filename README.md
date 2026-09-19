@@ -64,6 +64,17 @@ Sensitive information, real credentials, and unnecessary password or hash files 
 Learned how a wordlist attack works by creating a test SHA-256 password hash and using John the Ripper to test password candidates against it.
 
 **Status:** ✅ Completed
+### Lab 02 — Kali Network Recon
+
+**Tool:** Nmap, curl, ss, Python HTTP Server
+
+**Technique:** Network Reconnaissance & Web Service Enumeration
+
+**Target:** Localhost (`127.0.0.1`)
+
+Used Nmap to discover hosts, scan ports, and identify a local Python web service. Used curl to inspect the web server and discovered unintended directory listing/file exposure. Fixed the issue by creating a dedicated web directory and verified the fix.
+
+**Status:** ✅ Completed
 
 ---
 
