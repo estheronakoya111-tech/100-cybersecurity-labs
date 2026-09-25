@@ -1,1203 +1,420 @@
-# LAB 03 — FastAPI Authentication & Authorization Testing
+Yes — **one continuous copy/paste block**, but with the actual Python code clearly marked as code inside the document. No breaking it into separate documents.
 
-## Overview
+````text
+LAB 03 — FASTAPI AUTHENTICATION & AUTHORIZATION TESTING
 
-This lab focused on understanding how authentication and authorization work in an API and how to test access-control behavior using Burp Suite.
+Repository:
+100-cybersecurity-labs
 
-The API was built locally with FastAPI and tested through HTTP requests using Burp Suite Repeater.
+Folder:
+Lab-03-FastAPI-Auth-Authorization/
 
-The main goal was not to build a production-ready authentication system, but to understand how an API identifies users, issues tokens, checks those tokens, and prevents users from accessing resources they are not authorized to access.
+Files:
+- app.py
+- notes.md
+- screenshots/
 
----
+==================================================
+1. OBJECTIVE
+==================================================
 
-# 1. Objectives
+Build a small FastAPI application with login, token-based authentication, and protected user resources.
 
-The objectives of this lab were to:
+Use Burp Suite Repeater to inspect and modify HTTP requests and test whether users can access resources they are not authorized to access.
 
-- Build a simple API using FastAPI.
-- Understand FastAPI routes and HTTP methods.
-- Understand how POST requests differ from GET requests.
-- Understand Pydantic models and request validation.
-- Understand authentication.
-- Understand authorization.
-- Create and use simple authentication tokens.
-- Send tokens through the HTTP Authorization header.
-- Test API requests using Burp Suite Repeater.
-- Modify HTTP requests and observe how the server responds.
-- Identify an authorization/access-control weakness.
-- Fix the authorization problem by enforcing authorization server-side.
-- Understand HTTP status codes such as 401 and 403.
-- Understand why predictable tokens are insecure.
-- Understand the difference between client requests and server-side security decisions.
+Main concepts:
+- Authentication
+- Authorization
+- HTTP methods
+- HTTP headers
+- Bearer tokens
+- Access control
+- HTTP status codes
+- Burp Suite Repeater
 
----
 
-# 2. Technologies Used
+==================================================
+2. TOOLS
+==================================================
 
 - Python
 - FastAPI
-- Pydantic
 - Uvicorn
 - Burp Suite
-- HTTP
-- VS Code
-- Kali Linux / local testing environment
+- Kali Linux
+- Browser
 
-The API was intentionally kept simple so that the focus remained on authentication, authorization, HTTP requests, and security testing.
 
----
+==================================================
+3. APPLICATION CODE
+==================================================
 
-# 3. FastAPI Setup
+File: app.py
 
-FastAPI was used to create the API.
+```python
+from fastapi import FastAPI, HTTPException, Header
+from pydantic import BaseModel
 
-The application was started with:
-
-    uvicorn app:app --reload
-
-The command contains two important `app` references.
-
-The first `app` refers to the Python file:
-
-    app.py
-
-The second `app` refers to the FastAPI application object created inside that file:
-
-    app = FastAPI()
-
-Therefore:
-
-    app:app
-
-means:
-
-    Python file : FastAPI application object
-
-The `--reload` option allows Uvicorn to automatically reload the application when changes are made to the source code during development.
-
-The API was available locally at:
-
-    http://127.0.0.1:8000
-
----
-
-# 4. Creating the FastAPI Application
-
-The basic FastAPI application was created with:
-
-    from fastapi import FastAPI
-
-    app = FastAPI()
-
-The line:
-
-    app = FastAPI()
-
-creates the FastAPI application object.
-
-Routes are then attached to this application using decorators such as:
-
-    @app.get("/")
-    @app.post("/login")
-
-A decorator tells FastAPI which HTTP method and URL should trigger a particular function.
-
-For example:
-
-    @app.get("/")
-    def home():
-        return {"message": "API is running"}
-
-This means that when a GET request is sent to `/`, FastAPI runs the `home()` function.
-
----
-
-# 5. HTTP Methods
-
-A major part of the lab was understanding HTTP requests.
-
-Two methods were especially important:
-
-## GET
-
-GET is normally used to retrieve information from a server.
-
-For example:
-
-    GET /users/2
-
-can mean:
-
-"Give me the information belonging to user 2."
-
-## POST
-
-POST is commonly used when sending data to the server or asking the server to perform an operation that includes submitted data.
-
-The login endpoint used POST:
-
-    POST /login
-
-The username was sent in the request body.
-
-This is why opening `/login` directly in a browser was not the same as sending a POST request.
-
-Typing a URL into the browser normally results in a GET request.
-
-The login endpoint expected POST.
-
----
-
-# 6. Pydantic Request Model
-
-The application used a Pydantic model to define the expected structure of login data.
-
-The model was:
-
-    class LoginRequest(BaseModel):
-        username: str
-
-This introduced another important Python concept: classes.
-
-`LoginRequest` is a class that represents the structure of the data expected by the endpoint.
-
-The field:
-
+class LoginRequest(BaseModel):
     username: str
 
-means that the request is expected to contain a `username` value represented as a string.
+app = FastAPI()
 
-The model was then used by the login endpoint:
-
-    @app.post("/login")
-    def login(data: LoginRequest):
-
-FastAPI uses the Pydantic model to parse and validate the incoming request data.
-
-For example, the expected JSON body was:
-
-    {
-        "username": "Bob"
+users = {
+    1: {
+        "name": "Esther",
+        "email": "esther@example.com"
+    },
+    2: {
+        "name": "Bob",
+        "email": "bob@example.com"
+    },
+    3: {
+        "name": "John",
+        "email": "john@example.com"
     }
+}
 
-The important lesson was that `LoginRequest` is not a normal function. It is a class/model describing the expected structure of incoming data.
+tokens = {}
 
----
+@app.get("/")
+def home():
+    return {"message": "API is running"}
 
-# 7. User Data
+@app.post("/login")
+def login(data: LoginRequest):
+    for user_id, user in users.items():
+        if user["name"] == data.username:
+            token = f"token-{user_id}"
+            tokens[token] = user_id
 
-The application used a simple in-memory dictionary to represent users:
+            return {
+                "message": "Login successful",
+                "user_id": user_id,
+                "token": token
+            }
 
-    users = {
-        1: {
-            "name": "Esther", "email": "esther@example.com"
-        },
-        2: {
-            "name": "Bob", "email": "bob@example.com"
-        },
-        3: {
-            "name": "John", "email": "john@example.com"
-        }
-    }
+    raise HTTPException(
+        status_code=401,
+        detail="Invalid username"
+    )
 
-Each user had:
+@app.get("/users/{user_id}")
+def get_user(
+    user_id: int,
+    authorization: str = Header(None)
+):
+    token = authorization.replace("Bearer ", "")
+    logged_in_user = tokens.get(token)
 
-- A numeric user ID.
-- A name.
-- An email address.
+    if logged_in_user != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden"
+        )
 
-This was intentionally simple.
+    return users[user_id]
+````
 
-The users were not stored in a real database for this lab.
+==================================================
+4. RUNNING THE APPLICATION
+==========================
 
----
+Start the server with:
 
-# 8. Authentication vs Authorization
+```bash
+uvicorn app:app --reload
+```
 
-One of the most important concepts in this lab was the difference between authentication and authorization.
+The application runs locally at:
 
-## Authentication
+[http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+The first `app` in `app:app` refers to `app.py`.
+
+The second `app` refers to the FastAPI application object.
+
+==================================================
+5. BASIC ENDPOINTS
+==================
+
+GET /
+
+Purpose:
+Check that the API is running.
+
+Response:
+
+```json
+{
+    "message": "API is running"
+}
+```
+
+POST /login
+
+Purpose:
+Authenticate a user and generate a token.
+
+Example request:
+
+```http
+POST /login HTTP/1.1
+Host: 127.0.0.1:8000
+Content-Type: application/json
+
+{"username":"Bob"}
+```
+
+Example response:
+
+```json
+{
+    "message": "Login successful",
+    "user_id": 2,
+    "token": "token-2"
+}
+```
+
+GET /users/{user_id}
+
+Purpose:
+Return information belonging to a specific user.
+
+The request requires an Authorization header.
+
+Example:
+
+```http
+GET /users/2 HTTP/1.1
+Host: 127.0.0.1:8000
+Authorization: Bearer token-2
+
+```
+
+==================================================
+6. AUTHENTICATION VS AUTHORIZATION
+==================================
 
 Authentication answers:
 
 "Who are you?"
 
-For this lab, authentication happened when a username was submitted to the `/login` endpoint.
-
-If the username existed, the API treated the request as a successful login.
-
-## Authorization
+Example:
+Logging in as Bob.
 
 Authorization answers:
 
 "What are you allowed to access?"
 
-After authentication, the API needed to make sure that the logged-in user could only access the resource they were allowed to access.
+Example:
+Bob's token should allow Bob to access Bob's resource but not Esther's resource.
 
-For example:
+==================================================
+7. BURP SUITE TESTING
+=====================
 
-If Bob is logged in as user 2, he should not automatically be able to access Esther's user information at `/users/1`.
+Burp Suite Repeater was used to inspect and modify HTTP requests.
 
-Authentication identifies the user.
+A valid Bob request:
 
-Authorization controls what that user is allowed to access.
+```http
+GET /users/2 HTTP/1.1
+Host: 127.0.0.1:8000
+Authorization: Bearer token-2
 
----
+```
 
-# 9. Login Endpoint
+The server returned Bob's information.
 
-The login endpoint was:
+The request was then modified:
 
-    @app.post("/login")
-    def login(data: LoginRequest):
+```http
+GET /users/1 HTTP/1.1
+Host: 127.0.0.1:8000
+Authorization: Bearer token-2
 
-The endpoint loops through the users:
+```
 
-    for user_id, user in users.items():
-        if user["name"] == data.username:
+Only the user ID was changed.
 
-If the submitted username matches an existing user, a token is created.
-
-The token is generated using:
-
-    token = f"token-{user_id}"
-
-The token is then stored:
-
-    tokens[token] = user_id
-
-The API returns:
-
-    return {
-        "message": "Login successful",
-        "user_id": user_id,
-        "token": token
-    }
-
-If the username does not exist, the API returns:
-
-    raise HTTPException(status_code=401, detail="Invalid username")
-
----
-
-# 10. Authentication Token Storage
-
-The application used:
-
-    tokens = {}
-
-This dictionary acted as a very simple in-memory token store.
-
-For example, if Bob logged in, the server could store:
-
-    token-2 -> 2
-
-This means:
-
-- `token-2` belongs to user ID 2.
-- User ID 2 is Bob.
-
-The token could then be used in later requests.
-
-This is only a simplified learning implementation.
-
-A real authentication system would need much stronger token generation, expiration, revocation, secure storage, and other protections.
-
----
-
-# 11. Testing Login with Burp Suite
-
-Burp Suite Repeater was used to manually construct and modify HTTP requests.
-
-A login request could look like:
-
-    POST /login HTTP/1.1
-    Host: 127.0.0.1:8000
-    Content-Type: application/json
-    Content-Length: 17
-
-    {"username":"Bob"}
-
-The important parts are:
-
-- HTTP method: POST
-- Endpoint: `/login`
-- Host: `127.0.0.1:8000`
-- Content-Type: `application/json`
-- JSON request body
-
-The blank line between the headers and body is important.
-
----
-
-# 12. HTTP Header Blank-Line Issue
-
-While using Burp Repeater, a problem was encountered where the request did not have a proper blank line after the HTTP headers.
-
-Burp warned:
-
-    HTTP header block does not have a blank line at the end
-
-This caused the request to potentially wait or time out because the HTTP request was not formatted correctly.
-
-The correct structure is:
-
-    GET / HTTP/1.1
-    Host: 127.0.0.1:8000
-
-    <request body if needed>
-
-There must be a blank line separating the HTTP headers from the request body.
-
-This was an important practical HTTP lesson because manually editing requests in Burp means that small formatting mistakes can affect the request.
-
----
-
-# 13. Successful Bob Login
-
-A login request was sent with:
-
-    {
-        "username": "Bob"
-    }
-
-The API returned:
-
-    {
-        "message": "Login successful",
-        "user_id": 2,
-        "token": "token-2"
-    }
-
-This showed that the API had:
-
-1. Received the login request.
-2. Identified Bob.
-3. Assigned Bob's user ID.
-4. Created a token.
-5. Stored the relationship between the token and user ID.
-6. Returned the token to the client.
-
----
-
-# 14. Authorization Header
-
-After logging in, the token had to be sent with later requests.
-
-The API expected the token in the HTTP Authorization header.
-
-The request looked like:
-
-    GET /users/2 HTTP/1.1
-    Host: 127.0.0.1:8000
-    Authorization: Bearer token-2
-
-The important part is:
-
-    Authorization: Bearer token-2
-
-`Authorization` is the HTTP header.
-
-`Bearer` indicates that the value following it is being presented as a bearer credential.
-
-The API then extracts the token.
-
-The code used:
-
-    token = authorization.replace("Bearer ", "")
-
-This removes the `Bearer ` prefix.
-
-For:
-
-    Bearer token-2
-
-the resulting token becomes:
-
-    token-2
-
-The server then checks:
-
-    logged_in_user = tokens.get(token)
-
-If `token-2` belongs to user 2, the server obtains:
-
-    logged_in_user = 2
-
----
-
-# 15. Accessing Bob's Resource
-
-After Bob logged in, the following request was tested:
-
-    GET /users/2 HTTP/1.1
-    Host: 127.0.0.1:8000
-    Authorization: Bearer token-2
-
-The API returned Bob's information.
-
-This demonstrated the normal authenticated flow:
-
-    Login
-       ↓
-    Receive token
-       ↓
-    Send token in Authorization header
-       ↓
-    Server identifies logged-in user
-       ↓
-    Server checks requested resource
-       ↓
-    Access granted
-
----
-
-# 16. The Authorization Check
-
-The user endpoint was:
-
-    @app.get("/users/{user_id}")
-    def get_user(user_id: int, authorization: str = Header(None)):
-
-The server extracts the token:
-
-    token = authorization.replace("Bearer ", "")
-
-Then finds the logged-in user:
-
-    logged_in_user = tokens.get(token)
-
-The authorization decision is made with:
-
-    if logged_in_user != user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-Otherwise:
-
-    return users[user_id]
-
-The important security decision is:
-
-    logged_in_user != user_id
-
-If the logged-in user is not the same user as the requested resource, access is denied.
-
----
-
-# 17. Initial Authorization Problem
-
-Before the authorization check was properly enforced, changing the user ID in the URL could allow access to another user's information.
-
-For example, a request intended for one user could be changed from:
-
-    /users/1
-
-to:
-
-    /users/2
-
-If the server simply trusted the user ID supplied in the URL without checking whether the requester was allowed to access it, the API could return another user's information.
-
-This demonstrated an access-control weakness.
-
-The important lesson was that a server must never rely on the client to decide what the client is allowed to access.
-
-The client can modify:
-
-- URLs
-- parameters
-- request bodies
-- headers
-- tokens
-- other request data
-
-The server must make the final authorization decision.
-
----
-
-# 18. Testing the Authorization Control
-
-After authorization was implemented, Bob's token was used:
-
-    Authorization: Bearer token-2
-
-The original request was:
-
-    GET /users/2 HTTP/1.1
-
-This correctly returned Bob's information.
-
-The request was then modified to:
-
-    GET /users/1 HTTP/1.1
-
-while keeping:
-
-    Authorization: Bearer token-2
-
-This was an important Burp Suite test.
-
-The request effectively asked:
-
-"Bob's token is being used, but can Bob access user 1?"
+The token still belonged to Bob.
 
 The server returned:
 
-    403 Forbidden
+```http
+HTTP/1.1 403 Forbidden
+```
 
-This demonstrated that the authorization check was working.
+This showed that the authorization check was working.
 
-The server saw:
+==================================================
+8. AUTHORIZATION LOGIC
+======================
 
-    logged_in_user = 2
-    requested_user = 1
+The server extracts the token:
 
-Since:
+```python
+token = authorization.replace("Bearer ", "")
+```
 
-    2 != 1
+It then finds the user associated with that token:
 
-the request was rejected.
+```python
+logged_in_user = tokens.get(token)
+```
 
----
+Finally, it compares the logged-in user's ID with the requested user ID:
 
-# 19. Why 403 Was Returned
+```python
+if logged_in_user != user_id:
+    raise HTTPException(
+        status_code=403,
+        detail="Forbidden"
+    )
+```
 
-The application used HTTP status code 403 for this situation.
+If they do not match, access is denied.
 
-403 means that the server understood the request but is refusing to authorize access to the requested resource.
+==================================================
+9. STATUS CODES
+===============
 
-In this case, the user was authenticated with Bob's token, but the requested resource belonged to another user.
+401 Unauthorized
+
+Used when authentication fails.
+
+Example:
+
+```json
+{
+    "detail": "Invalid username"
+}
+```
+
+403 Forbidden
+
+Used when the request is understood but the authenticated user is not allowed to access the requested resource.
+
+==================================================
+10. TOKEN TESTING
+=================
+
+The application generates tokens using:
+
+```python
+token = f"token-{user_id}"
+```
 
 Therefore:
 
-    Authentication: successful
+User 1 → token-1
 
-but:
+User 2 → token-2
 
-    Authorization: failed
+User 3 → token-3
 
-This is why the application returned:
+However, a token only becomes active after that user logs in because the token is stored in:
 
-    403 Forbidden
+```python
+tokens[token] = user_id
+```
 
----
+For example, after Bob logs in:
 
-# 20. Testing token-1
+```text
+token-2 → user ID 2
+```
 
-The token generation code was:
+Testing `token-1` before Esther logs in does not authenticate Esther because that token has not yet been added to the server's in-memory token store.
 
-    token = f"token-{user_id}"
+==================================================
+11. SECURITY OBSERVATION
+========================
 
-Therefore, based on the code:
+The token format is predictable:
 
-    user 1 -> token-1
-    user 2 -> token-2
-    user 3 -> token-3
+```text
+token-1
+token-2
+token-3
+```
 
-It was tempting to assume that simply sending:
+This is acceptable for a controlled learning lab but is not secure for a real application.
 
-    Authorization: Bearer token-1
+Production applications should use unpredictable tokens with proper expiration, validation, and revocation mechanisms.
 
-would authenticate as Esther.
+==================================================
+12. BURP SUITE LESSON
+=====================
 
-However, the server only stores tokens when the corresponding user actually logs in.
+Burp Repeater made it possible to:
 
-When Bob logged in, the token store contained something equivalent to:
+* Inspect HTTP requests
+* Modify the requested user ID
+* Modify Authorization headers
+* Resend requests
+* Observe server responses
+* Test access-control behavior
 
-    token-2 -> 2
+A key lesson was that changing client-side request values does not matter if the server properly verifies authorization.
 
-There was no:
+==================================================
+13. PROBLEMS ENCOUNTERED
+========================
 
-    token-1 -> 1
+Burp initially produced a request timeout.
 
-because Esther had not logged in during that server session.
+The problem was caused by the HTTP request not having a blank line after the headers.
 
-Therefore, sending `token-1` without first logging Esther in did not automatically authenticate as Esther.
+Correct structure:
 
-This demonstrated an important distinction between:
+```http
+GET /users/2 HTTP/1.1
+Host: 127.0.0.1:8000
+Authorization: Bearer token-2
 
-- the format of a token
-- an active token stored by the server
+```
 
-A token-looking string is not automatically valid.
+The blank line tells the server that the HTTP headers have ended and the request is ready to be processed.
 
----
+==================================================
+14. KEY LEARNING
+================
 
-# 21. Predictable Token Weakness
+Authentication and authorization are different.
 
-Although the token system worked for this learning lab, the token generation method is insecure.
+A user being logged in does not automatically mean they should be able to access every resource.
 
-The application generates:
+The server must verify:
 
-    token-{user_id}
+1. Who the user is.
+2. Which resource they requested.
+3. Whether that user is allowed to access it.
 
-This means the token is directly related to the user's ID.
+Burp Suite can be used to test whether these checks are actually enforced by the server.
 
-For example:
+==================================================
+15. RESULT
+==========
 
-    token-1
-    token-2
-    token-3
+Successfully:
 
-are predictable.
+* Built a FastAPI API.
+* Created a login endpoint.
+* Implemented simple token authentication.
+* Protected user resources.
+* Used Authorization headers.
+* Tested requests with Burp Suite Repeater.
+* Modified user IDs to test access control.
+* Confirmed unauthorized access returned 403.
+* Investigated how tokens were generated and stored.
+* Identified predictable token generation as a security weakness.
 
-A production authentication system should not use predictable credentials like this.
+LAB STATUS: COMPLETE
 
-Real authentication systems should use securely generated, unpredictable credentials and should normally include protections such as:
+Environment: Local/controlled environment
+Purpose: Cybersecurity education and authorized security testing
 
-- expiration
-- revocation
-- secure storage
-- appropriate token validation
-- protection against token theft
-- secure transport through HTTPS
-
-The predictable token design was intentionally kept simple for this lab so the authentication and authorization concepts could be understood without introducing unnecessary complexity.
-
----
-
-# 22. HTTPException
-
-The application used:
-
-    HTTPException
-
-from FastAPI:
-
-    from fastapi import FastAPI, HTTPException, Header
-
-`HTTPException` allows the server to return an HTTP error response.
-
-For example:
-
-    raise HTTPException(status_code=401, detail="Invalid username")
-
-returns a 401 response.
-
-Another example:
-
-    raise HTTPException(status_code=403, detail="Forbidden")
-
-returns a 403 response.
-
-This is different from:
-
-    print()
-
-`print()` only writes information to the server's console.
-
-It does not create an HTTP error response for the client.
-
-`HTTPException` tells FastAPI to send an actual HTTP error response.
-
----
-
-# 23. Status Codes Used
-
-Two important status codes were used in this lab.
-
-## 401 Unauthorized
-
-The application used 401 when the username supplied during login did not match a user.
-
-Example:
-
-    Invalid username
-
-The idea was that authentication had failed.
-
-## 403 Forbidden
-
-The application used 403 when the authenticated user attempted to access another user's resource.
-
-Example:
-
-    Bob's token -> /users/1
-
-The user had been identified, but the requested resource was not authorized for that user.
-
----
-
-# 24. GET vs POST in Burp
-
-Burp Repeater made the difference between HTTP methods more obvious.
-
-For example:
-
-    GET /users/2 HTTP/1.1
-
-was used to retrieve user information.
-
-The login endpoint required:
-
-    POST /login HTTP/1.1
-
-because the username was submitted in the request body.
-
-A browser address bar normally performs a GET request, so simply navigating to:
-
-    http://127.0.0.1:8000/login
-
-does not perform the same operation as sending:
-
-    POST /login
-
-with JSON data.
-
-This was an important practical lesson when manually testing APIs.
-
----
-
-# 25. Burp Suite Repeater
-
-Burp Suite Repeater was one of the main tools used during the lab.
-
-Repeater allows an HTTP request to be:
-
-- inspected
-- edited
-- resent
-- compared
-- tested with different values
-
-This made it possible to manually test authorization behavior.
-
-For example, the same request could be changed from:
-
-    /users/2
-
-to:
-
-    /users/1
-
-while keeping the same token.
-
-This is useful when testing whether an API properly validates authorization instead of blindly trusting values supplied by the client.
-
----
-
-# 26. Security Testing Process
-
-The general testing process used in the lab was:
-
-    1. Build the API
-       ↓
-    2. Start the server
-       ↓
-    3. Send a login request
-       ↓
-    4. Receive an authentication token
-       ↓
-    5. Send the token in the Authorization header
-       ↓
-    6. Request the authenticated user's resource
-       ↓
-    7. Modify the resource ID
-       ↓
-    8. Resend the request
-       ↓
-    9. Observe the server response
-       ↓
-    10. Verify whether authorization is enforced
-
-This is a basic example of hands-on API security testing.
-
----
-
-# 27. What This Lab Demonstrated
-
-The lab demonstrated that API security cannot rely on the frontend or the client behaving correctly.
-
-A client can change a request.
-
-For example, a client can change:
-
-    /users/2
-
-to:
-
-    /users/1
-
-Therefore, the server must independently determine whether the requester is allowed to access user 1.
-
-The security decision belongs on the server.
-
----
-
-# 28. Python Concepts Reinforced
-
-This lab also reinforced several Python concepts.
-
-## Classes
-
-The Pydantic request model used:
-
-    class LoginRequest(BaseModel):
-
-This reinforced the idea that a class defines a structure/type.
-
-## Dictionaries
-
-The application used dictionaries for:
-
-- users
-- tokens
-
-For example:
-
-    tokens[token] = user_id
-
-stores a relationship between a token and a user ID.
-
-## Functions
-
-FastAPI endpoints are Python functions.
-
-For example:
-
-    def login(data: LoginRequest):
-
-and:
-
-    def get_user(user_id: int, authorization: str = Header(None)):
-
-## Loops
-
-The login endpoint used:
-
-    for user_id, user in users.items():
-
-to search through the stored users.
-
-## Conditions
-
-The application used conditions such as:
-
-    if user["name"] == data.username:
-
-and:
-
-    if logged_in_user != user_id:
-
-These conditions determine whether the request should continue or be rejected.
-
-## f-strings
-
-The token was generated with:
-
-    f"token-{user_id}"
-
-This is an f-string, allowing the value of `user_id` to be inserted into the string.
-
----
-
-# 29. FastAPI Concepts Reinforced
-
-The lab reinforced:
-
-- FastAPI application creation
-- Route decorators
-- GET routes
-- POST routes
-- Path parameters
-- Headers
-- Request bodies
-- Pydantic models
-- HTTP exceptions
-- HTTP status codes
-- Uvicorn
-- Local API testing
-
-An example of a path parameter was:
-
-    @app.get("/users/{user_id}")
-
-The `{user_id}` portion is taken from the URL and passed into the function.
-
----
-
-# 30. HTTP Concepts Reinforced
-
-The lab provided practical experience with:
-
-- HTTP methods
-- HTTP headers
-- HTTP request bodies
-- HTTP status codes
-- Authorization headers
-- Bearer tokens
-- GET requests
-- POST requests
-- Request formatting
-- Blank lines separating headers and body
-
-The lab also showed that manually constructing HTTP requests requires attention to syntax and formatting.
-
----
-
-# 31. Problems Encountered
-
-Several problems were encountered during the lab.
-
-## Burp Request Timeout
-
-One request timed out because the HTTP request did not contain the required blank line after the headers.
-
-This was solved by correctly formatting the HTTP request.
-
-## HTTP Method Confusion
-
-There was also attention around whether the request was actually being sent as GET or another method.
-
-This reinforced the importance of checking the exact HTTP method in Burp Repeater.
-
-## token-1 Returning 403
-
-`token-1` was tested before Esther had logged in.
-
-The request was rejected because the in-memory token store only contained tokens that had actually been generated during the current application session.
-
-This reinforced the difference between a predictable token format and a valid active token.
-
----
-
-# 32. Burp Evidence
-
-Screenshots were captured as evidence that Burp Suite was used during the lab.
-
-The screenshots serve as supporting evidence for the practical testing process.
-
-The screenshots do not represent every individual step.
-
-The important evidence is that Burp Repeater was used to:
-
-- send API requests
-- include Authorization headers
-- modify resource IDs
-- resend requests
-- observe HTTP responses
-- verify authorization behavior
-
----
-
-# 33. Final Application Code
-
-The final application was saved as:
-
-    app.py
-
-The final code was:
-
-    from fastapi import FastAPI, HTTPException, Header
-    from pydantic import BaseModel
-
-    class LoginRequest(BaseModel):
-        username: str
-
-    app = FastAPI()
-
-    users = {
-        1: {
-            "name": "Esther", "email": "esther@example.com"
-        },
-        2: {
-            "name": "Bob", "email": "bob@example.com"
-        },
-        3: {
-            "name": "John", "email": "john@example.com"
-        }
-    }
-
-    tokens = {}
-
-    @app.get("/")
-    def home():
-        return {"message": "API is running"}
-
-    @app.post("/login")
-    def login(data: LoginRequest):
-        for user_id, user in users.items():
-            if user["name"] == data.username:
-                token = f"token-{user_id}"
-                tokens[token] = user_id
-                return {
-                    "message": "Login successful",
-                    "user_id": user_id,
-                    "token": token
-                }
-
-        raise HTTPException(status_code=401, detail="Invalid username")
-
-    @app.get("/users/{user_id}")
-    def get_user(user_id: int, authorization: str = Header(None)):
-        token = authorization.replace("Bearer ", "")
-        logged_in_user = tokens.get(token)
-
-        if logged_in_user != user_id:
-            raise HTTPException(status_code=403, detail="Forbidden")
-        else:
-            return users[user_id]
-
----
-
-# 34. Lab Folder Structure
-
-The lab was stored as the third lab inside the existing cybersecurity labs repository.
-
-The structure is:
-
-    100-cybersecurity-labs/
-    │
-    ├── Lab-01-John-the-Ripper/
-    │
-    ├── Lab-02-Nmap-SimpleHTTPServer/
-    │
-    └── Lab-03-FastAPI-Auth-Authorization/
-        │
-        ├── app.py
-        ├── notes.md
-        │
-        └── screenshots/
-
-The `notes.md` file contains the documentation for the lab.
-
-The screenshots folder contains evidence from the Burp Suite testing.
-
----
-
-# 35. Limitations of the Lab
-
-This application is intentionally a learning application.
-
-It is not production-ready authentication.
-
-Some limitations include:
-
-- No password authentication.
-- No database.
-- Tokens are predictable.
-- Tokens are stored only in memory.
-- Tokens do not expire.
-- There is no token revocation system.
-- There is no refresh-token system.
-- There is no HTTPS configuration in the local lab.
-- There is no real user-management system.
-- Error handling is intentionally simple.
-- The authentication model is simplified.
-
-These limitations were intentional because the objective was to understand authentication and authorization fundamentals and practice testing them with Burp Suite.
-
-The lab should not be treated as a secure authentication implementation for a real application.
-
----
-
-# 36. What Was Actually Tested
-
-The practical testing performed in this lab included:
-
-1. Starting the FastAPI server.
-2. Accessing the local API.
-3. Creating and testing the `/login` endpoint.
-4. Sending JSON login data.
-5. Receiving a token.
-6. Understanding how the token was stored.
-7. Sending the token using the Authorization header.
-8. Accessing the authenticated user's resource.
-9. Modifying the requested user ID.
-10. Sending the modified request through Burp Repeater.
-11. Observing the 403 Forbidden response.
-12. Testing the behavior of another predictable token.
-13. Investigating why an inactive token was rejected.
-14. Observing how HTTP request formatting affects Burp requests.
-
----
-
-# 37. Main Security Lessons
-
-The most important security lessons from this lab were:
-
-## 1. Authentication is not authorization
-
-Knowing who a user is does not automatically mean they are allowed to access every resource.
-
-## 2. The server must enforce authorization
-
-The client should never be trusted to decide what it is allowed to access.
-
-## 3. URLs can be modified
-
-A user can change values such as:
-
-    /users/2
-
-to:
-
-    /users/1
-
-The server must validate whether the requester is allowed to access the new resource.
-
-## 4. Tokens should not be predictable
-
-A token such as:
-
-    token-2
-
-is easy to guess.
-
-Real authentication systems need unpredictable credentials.
-
-## 5. Burp Repeater is useful for testing authorization
-
-Repeater makes it easy to modify HTTP requests and see whether the server properly validates them.
-
-## 6. HTTP details matter
-
-Incorrect headers, missing blank lines, or incorrect methods can cause requests to fail even when the application itself is working.
-
-## 7. HTTP status codes communicate security decisions
-
-401 and 403 are not just numbers.
-
-They communicate different types of failures.
-
-## 8. A token-looking value is not automatically valid
-
-A token must be recognized and accepted by the server.
-
----
-
-# 38. Final Takeaway
-
-This lab provided hands-on experience with a basic authentication and authorization flow rather than only learning the concepts theoretically.
-
-The process was:
-
-    User logs in
-          ↓
-    Server identifies user
-          ↓
-    Server creates token
-          ↓
-    Token is returned
-          ↓
-    Client sends token with request
-          ↓
-    Server identifies logged-in user
-          ↓
-    Server checks requested resource
-          ↓
-    Authorization decision
-          ↓
-    Access granted or denied
-
-The most important lesson was that authentication and authorization are separate security controls.
-
-A user can be successfully authenticated and still be denied access to a resource.
-
-Burp Suite made this distinction practical by allowing the request to be modified while keeping the same authentication token.
-
-Changing the requested resource while keeping Bob's token demonstrated why server-side authorization checks are necessary.
-
-The lab also introduced practical API security testing: rather than assuming that an endpoint is secure because it works normally, requests were deliberately modified to see how the server responded.
-
-This was the main purpose of the lab: to understand how authentication, authorization, HTTP requests, tokens, and access-control decisions work together and to verify those controls through hands-on testing.
+```
+```
