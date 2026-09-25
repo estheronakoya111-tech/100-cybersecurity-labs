@@ -1,4 +1,3 @@
-Yes — **one continuous copy/paste block**, but with the actual Python code clearly marked as code inside the document. No breaking it into separate documents.
 
 ````text
 LAB 03 — FASTAPI AUTHENTICATION & AUTHORIZATION TESTING
