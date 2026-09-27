@@ -1,21 +1,61 @@
 # Lab 03 — FastAPI Authentication & Authorization
 
+<<<<<<< HEAD
+=======
 ## Overview
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+````markdown
+# Lab 03 — FastAPI Authentication & Authorization
+=======
 This lab was focused on understanding how authentication and authorization work in a simple FastAPI application.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+**Repository:** `100-cybersecurity-labs`  
+**Folder:** `Lab-03-FastAPI-Auth-Authorization/`  
+**Tools:** Python, FastAPI, Uvicorn, Burp Suite Repeater, Kali Linux  
+**Target:** Local FastAPI application
+=======
 I built a small API that allows users to log in, receive a token, and then use that token when making requests to protected user resources.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+## Objective
+=======
 I also used Burp Suite Repeater to inspect, modify, and resend HTTP requests. This helped me understand how authentication information is actually sent through HTTP headers and how authorization can be tested by changing the requested resource or token.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+Build a small API with login and protected user resources, then use Burp Suite Repeater to test whether authentication and authorization are actually enforced.
+=======
 The application was intentionally simple. The goal was not to build production-ready authentication, but to understand the basic flow and see how authentication and authorization can be tested.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The main things tested were:
+=======
 ---
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+- Authentication vs authorization
+- HTTP GET and POST requests
+- Authorization headers
+- Bearer tokens
+- Access-control checks
+- HTTP `401` and `403` responses
+- Modifying requests with Burp Repeater
+=======
 ## Objectives
 
 The main things I wanted to understand from this lab were:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+## Setup
+=======
 - How FastAPI creates API routes.
 - How `GET` and `POST` requests work.
 - How request bodies are received using Pydantic models.
@@ -27,9 +67,16 @@ The main things I wanted to understand from this lab were:
 - How `403 Forbidden` is returned when authorization fails.
 - How Burp Suite Repeater can be used to inspect and modify requests.
 - How predictable authentication tokens can create a security weakness.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The application was written in `app.py`.
+=======
 ---
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+=======
 ## Technologies Used
 
 - Python
@@ -48,6 +95,7 @@ The first step was creating the basic FastAPI application.
 
 The application object is created using `FastAPI()`:
 
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```python
 from fastapi import FastAPI
 
@@ -108,26 +156,49 @@ This means:
 GET /
 ```
 
+<<<<<<< HEAD
+    raise HTTPException(status_code=401, detail="Invalid username")
+=======
 calls the `home()` function.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
 Another route can be created for a specific user:
 
 ```python
 @app.get("/users/{user_id}")
+<<<<<<< HEAD
+def get_user(user_id: int, authorization: str = Header(None)):
+    token = authorization.replace("Bearer ", "")
+    logged_in_user = tokens.get(token)
+=======
 def get_user(user_id: int):
     ...
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+    if logged_in_user != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+=======
 The `{user_id}` part is a path parameter.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
 For example:
 
+<<<<<<< HEAD
+The server was started with:
+=======
 ```text
 /users/1
 /users/2
 /users/3
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```bash
+uvicorn app:app --reload
+=======
 would give the server different values for `user_id`.
 
 The `: int` tells FastAPI that the value should be treated as an integer.
@@ -147,18 +218,42 @@ For example:
 ```http
 GET /users/2 HTTP/1.1
 Host: 127.0.0.1:8000
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```
 
+<<<<<<< HEAD
+`app:app` means the `app.py` file and the `app` FastAPI object inside it.
+=======
 This asks the server for information about user `2`.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The API was available at:
+=======
 ### POST
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+`http://127.0.0.1:8000`
+=======
 A `POST` request is commonly used when sending information to the server.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+## Authentication
+=======
 The login endpoint used a `POST` request because the client needs to send a username to the server.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The `/login` endpoint uses a Pydantic model to accept a username.
+=======
 Example:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+Example request:
+=======
 ```http
 POST /login HTTP/1.1
 Host: 127.0.0.1:8000
@@ -216,6 +311,7 @@ POST /login
 FastAPI uses the Pydantic model to read and validate the incoming request data.
 
 This is useful because I don't have to manually extract the JSON value from the request.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
 ---
 
@@ -237,7 +333,11 @@ For example:
 Bob
 ```
 
+<<<<<<< HEAD
+Response:
+=======
 was identified as user ID:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
 ```text
 2
@@ -354,18 +454,49 @@ The login response included information similar to:
 }
 ```
 
+<<<<<<< HEAD
+Authentication answers **who the user is**.
+=======
 The important part of this process is that the server remembers which user the token belongs to.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The token is stored in the `tokens` dictionary:
+=======
 ---
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```python
+tokens[token] = user_id
+```
+=======
 ## 8. Using the Token
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+So after Bob logs in, the server has:
+=======
 After logging in, the token can be included in another request.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```text
+token-2 -> 2
+```
+
+## Authorization
+
+The `/users/{user_id}` endpoint requires an Authorization header.
+
+A valid request for Bob was:
+
+=======
 The token was sent using the HTTP `Authorization` header.
 
 The format used was:
 
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```http
 Authorization: Bearer token-2
 ```
@@ -379,30 +510,74 @@ Authorization: Bearer token-2
 
 ```
 
+<<<<<<< HEAD
+The server returned Bob's information.
+=======
 The word `Bearer` indicates that the client is presenting a token to the server as proof of authentication.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+Authorization answers **what the authenticated user is allowed to access**.
+=======
 The server then needs to extract the actual token.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The server removes `Bearer ` from the header and looks up the token:
+=======
 The code used:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```python
+token = authorization.replace("Bearer ", "")
+logged_in_user = tokens.get(token)
+```
+=======
 ```python
 token = authorization.replace("Bearer ", "")
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+It then compares the logged-in user's ID with the requested user ID:
+=======
 If the header contains:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```python
+if logged_in_user != user_id:
+    raise HTTPException(status_code=403, detail="Forbidden")
+```
+=======
 ```text
 Bearer token-2
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+## Burp Suite Test
+=======
 the extracted token becomes:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The request was sent to Burp Suite Repeater so the request could be modified and resent.
+=======
 ```text
 token-2
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The original request was:
+=======
 The server can then check whether that token exists.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+=======
 ---
 
 ## 9. Checking the Token
@@ -536,6 +711,7 @@ Burp Suite was useful because it allowed me to see the request in a form similar
 
 For example, I could inspect:
 
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```http
 GET /users/2 HTTP/1.1
 Host: 127.0.0.1:8000
@@ -543,8 +719,14 @@ Authorization: Bearer token-2
 
 ```
 
+<<<<<<< HEAD
+The user ID was changed from `2` to `1` while keeping Bob's token:
+=======
 I could then modify parts of the request and resend it.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+=======
 This is useful for security testing because I can test whether the server is relying on something that the client is allowed to change.
 
 ---
@@ -564,6 +746,7 @@ The general process was:
 
 For example, I could change:
 
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```http
 GET /users/2 HTTP/1.1
 ```
@@ -603,6 +786,9 @@ Authorization: Bearer token-2
 
 ```
 
+<<<<<<< HEAD
+The server returned:
+=======
 The request was allowed because:
 
 ```text
@@ -611,6 +797,7 @@ user_id = 2
 ```
 
 The values matched.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
 I then changed the requested resource:
 
@@ -621,21 +808,41 @@ Authorization: Bearer token-2
 
 ```
 
+<<<<<<< HEAD
+This showed that Bob's token could not be used to access Esther's resource.
+=======
 Now the values were:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The important part of the test was that the request was changed on the client side, but the server still performed its own authorization check.
+=======
 ```text
 logged_in_user = 2
 user_id = 1
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+## Token Test
+=======
 They did not match.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The token format is created with:
+=======
 The server therefore returned:
 
 ```text
 403 Forbidden
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```python
+token = f"token-{user_id}"
+=======
 This showed that the authorization check was actually being enforced on the server.
 
 ---
@@ -646,20 +853,44 @@ I also tested what would happen if I replaced Bob's token:
 
 ```text
 token-2
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```
 
+<<<<<<< HEAD
+This means the format is predictable:
+=======
 with:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```text
+User 1 -> token-1
+User 2 -> token-2
+User 3 -> token-3
+=======
 ```text
 token-1
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```
 
+<<<<<<< HEAD
+However, the token is only added to the active token store when that user logs in.
+=======
 while requesting:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+For example, if only Bob logs in:
+=======
 ```text
 /users/1
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```text
+token-2 -> 2
+=======
 At first, this still returned an authorization failure.
 
 The reason was important.
@@ -668,17 +899,34 @@ I had not logged in as Esther during that test, so:
 
 ```text
 token-1
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```
 
+<<<<<<< HEAD
+`token-1` will not work yet because Esther has not logged in and `token-1` has not been stored.
+=======
 had never been added to the `tokens` dictionary.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+The predictable token format is still a security weakness. A real application should use unpredictable tokens instead of deriving them directly from user IDs.
+=======
 The server therefore had no record connecting:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+## HTTP Status Codes
+=======
 ```text
 token-1
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+`401 Unauthorized` was used when authentication failed:
+=======
 to user ID `1`.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
 This showed why the token dictionary matters. The server does not simply trust the format of the token. It checks whether the token actually exists in its stored authentication state.
 
@@ -691,11 +939,19 @@ One security weakness I identified was the way the tokens were generated.
 The token was created using:
 
 ```python
-token = f"token-{user_id}"
+raise HTTPException(status_code=401, detail="Invalid username")
 ```
 
+<<<<<<< HEAD
+`403 Forbidden` was used when the authenticated user was not allowed to access the requested resource:
+=======
 This means the token is directly based on the user's ID.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+```python
+raise HTTPException(status_code=403, detail="Forbidden")
+=======
 For example:
 
 ```text
@@ -761,10 +1017,18 @@ Server extracts token
 Server looks up token
         ↓
 Server identifies logged-in user
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```
 
+<<<<<<< HEAD
+## Burp Issue Encountered
+=======
 After authentication, authorization is checked:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+One request initially timed out because the HTTP request did not have a blank line after the headers.
+=======
 ```text
 User requests a resource
         ↓
@@ -775,9 +1039,16 @@ Server compares logged-in user with requested resource
 If they match → allow access
 If they do not match → 403 Forbidden
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+Correct format:
+=======
 This helped me understand that authentication and authorization are separate steps.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+=======
 ---
 
 ## 19. Important HTTP Concepts I Learned
@@ -815,6 +1086,7 @@ If the request has a body, the body comes after the blank line.
 
 For example:
 
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```http
 POST /login HTTP/1.1
 Host: 127.0.0.1:8000
@@ -825,25 +1097,64 @@ Content-Type: application/json
 }
 ```
 
+<<<<<<< HEAD
+The blank line marks the end of the HTTP headers.
+=======
 Understanding this made it easier to understand what Burp Suite was showing me.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+## What I Learned
+=======
 ---
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+* FastAPI routes can handle different HTTP methods.
+* Pydantic models validate and structure request data.
+* Authentication and authorization are separate security controls.
+* HTTP headers can carry authentication information.
+* Bearer tokens can be passed through the `Authorization` header.
+* Burp Repeater can be used to modify and resend HTTP requests.
+* Authorization must be enforced by the server.
+* A valid token does not automatically mean access to every resource.
+* `401` and `403` represent different security failures.
+* Predictable tokens are not suitable for production authentication.
+=======
 ## 20. What I Learned From Burp Suite
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+## Result
+=======
 Before this lab, HTTP requests could look like something abstract happening behind the application.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+Successfully built and tested a local FastAPI authentication and authorization system. Burp Suite was used to modify the requested user ID and verify that server-side authorization prevented one user's token from accessing another user's resource.
+=======
 Using Burp Repeater helped me see that the client is actually sending specific information to the server.
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+**Status:** Complete
+=======
 For example, I could manually change:
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+**Environment:** Local controlled environment
+=======
 ```text
 HTTP method
 URL path
 Authorization header
 Request body
 ```
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 
+<<<<<<< HEAD
+=======
 and then observe how the server responded.
 
 This is important for security testing because anything sent by the client should generally be treated as untrusted input.
@@ -862,6 +1173,7 @@ Changing:
 
 ```text
 /users/2
+>>>>>>> cacd10ee0de8aa9a72e05eb32fd564b9c5353fe3
 ```
 
 to:
