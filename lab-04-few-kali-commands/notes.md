@@ -9,18 +9,18 @@ This lab is focused on learning Linux fundamentals that are useful for
 cybersecurity, system administration, troubleshooting, and security analysis.
 
 The goal is not just to memorize commands, but to understand what the
-operating system is doing.
+operating system is doing and why the commands are useful.
 
 ---
 
 # 1. Linux Filesystem
 
-Linux organizes everything under one main directory called `/`.
+I learned that Linux organizes everything under one main directory called `/`.
 
 Unlike Windows, Linux does not normally use drive letters such as `C:` and
 `D:` for its filesystem structure.
 
-Some important directories are:
+Some important directories I learned about are:
 
 | Directory | Purpose |
 |---|---|
@@ -42,7 +42,7 @@ Some important directories are:
 
 `pwd` means **Print Working Directory**.
 
-It shows the directory I am currently inside.
+I learned that it shows the directory I am currently inside.
 
 ```bash
 pwd
@@ -66,9 +66,9 @@ The `-a` option includes hidden files.
 ls -la
 ```
 
-Linux considers files whose names begin with `.` to be hidden.
+I learned that Linux considers files whose names begin with `.` to be hidden.
 
-Examples:
+Examples include:
 
 ```text
 .config
@@ -104,7 +104,8 @@ moves to the root directory.
 
 # 2. Linux File Permissions
 
-Linux uses permissions to control who can read, modify, or execute files.
+I learned that Linux uses permissions to control who can read, modify,
+or execute files.
 
 The three basic permissions are:
 
@@ -141,7 +142,7 @@ Others have only read permission.
 
 `chmod` means **change mode**.
 
-It changes file permissions.
+I learned that it is used to change file permissions.
 
 ```bash
 chmod u+x script.py
@@ -155,9 +156,7 @@ chmod u-x script.py
 
 removes execute permission from the owner.
 
-Numeric permissions can also be used.
-
-The values are:
+I also learned that permissions can be represented using numbers.
 
 ```text
 read     = 4
@@ -194,14 +193,14 @@ Another example:
 chmod 600 secret.txt
 ```
 
-gives the owner read/write permission while removing permissions from the
-group and others.
+gives the owner read/write permission while removing permissions from
+the group and others.
 
 ---
 
 # 3. File Ownership
 
-Linux files have an owner and a group.
+I learned that Linux files have an owner and a group.
 
 ## `chown`
 
@@ -233,7 +232,7 @@ Changing ownership usually requires elevated privileges.
 stat file.txt
 ```
 
-It can show information such as:
+I learned that it can show information such as:
 
 * file size
 * permissions
@@ -241,7 +240,7 @@ It can show information such as:
 * group
 * timestamps
 
-This is useful when investigating files because metadata can provide
+This can be useful when investigating files because metadata can provide
 information about how and when a file was modified.
 
 ---
@@ -270,7 +269,7 @@ find /home -name "*.py"
 
 finds Python files.
 
-An important distinction:
+One important difference I learned is:
 
 ```text
 find → searches for files/directories
@@ -293,8 +292,8 @@ grep "failed" login.log
 
 This searches `login.log` for lines containing the word `failed`.
 
-This is particularly useful in cybersecurity because logs can contain
-large amounts of information.
+I learned that this is particularly useful in cybersecurity because logs
+can contain large amounts of information.
 
 For example, I could search authentication logs for:
 
@@ -317,8 +316,8 @@ unauthorized
 tail login.log
 ```
 
-This is useful for logs because the newest entries are often near the end
-of the file.
+I learned that this is useful for logs because the newest entries are
+often near the end of a file.
 
 ### `tail -f`
 
@@ -331,13 +330,14 @@ The `-f` option means **follow**.
 Instead of showing the file once and stopping, it continues displaying new
 lines as they are added.
 
-This is useful for monitoring a log while something is happening.
+I learned that this can be useful for monitoring a log while something is
+happening.
 
 ---
 
 # 8. Processes
 
-A **process** is a program that is currently running.
+I learned that a **process** is a program that is currently running.
 
 Every process has a **PID (Process ID)**.
 
@@ -351,24 +351,21 @@ ps aux
 
 This displays running processes.
 
-We also used:
+I also used:
 
 ```bash
 ps aux --sort=-%cpu | head
 ```
 
-This helped us identify processes using the most **CPU (Central Processing
-Unit)**.
+to identify processes using the most **CPU (Central Processing Unit)**.
 
-We investigated a Chromium process using:
+I investigated a Chromium process using:
 
 ```bash
 ps -p 3122 -f
 ```
 
-This displayed detailed information about that particular process.
-
-We learned about:
+This helped me understand information such as:
 
 * PID = Process ID
 * PPID = Parent Process ID
@@ -387,10 +384,10 @@ For example:
 kill 3122
 ```
 
-was used during the lab to terminate a specific Chromium process.
+I used this during the lab to terminate a specific Chromium process.
 
-A process can be part of a larger application, so killing one process does
-not necessarily close the entire application.
+I learned that a process can be part of a larger application, so killing
+one process does not necessarily close the entire application.
 
 ---
 
@@ -398,8 +395,8 @@ not necessarily close the entire application.
 
 ## `ping`
 
-`ping` tests whether a host can be reached and measures how long responses
-take.
+I learned that `ping` can be used to test whether a host can be reached
+and to measure how long responses take.
 
 For example:
 
@@ -407,7 +404,7 @@ For example:
 ping google.com
 ```
 
-We also tested:
+I also tested:
 
 ```bash
 ping 8.8.8.8
@@ -425,7 +422,7 @@ Some information shown in the output includes:
 * `time` = round-trip response time
 * packet loss
 
-We also learned that `ping` does not necessarily mean "is the internet
+I also learned that `ping` does not necessarily mean "is the internet
 working?"
 
 For example:
@@ -445,13 +442,13 @@ loopback address.
 traceroute google.com
 ```
 
-`traceroute` attempts to show the network hops between my machine and a
-destination.
+I learned that `traceroute` attempts to show the network hops between
+my machine and a destination.
 
 A hop is normally a router or other network device involved in forwarding
 traffic.
 
-We saw:
+I saw output similar to:
 
 ```text
 1  10.0.2.2
@@ -462,7 +459,7 @@ We saw:
 The first hop was the virtual network gateway used by my Kali virtual
 machine.
 
-The `* * *` entries mean that the probes did not receive a response.
+I learned that `* * *` means the probes did not receive a response.
 
 This does not automatically mean that the network device is down.
 Devices or firewalls can simply refuse to respond to traceroute probes.
@@ -486,7 +483,7 @@ lo
 eth0
 ```
 
-`lo` is the loopback interface.
+I learned that `lo` is the loopback interface.
 
 Its address:
 
@@ -496,7 +493,8 @@ Its address:
 
 refers back to the same machine.
 
-`eth0` is the network interface used by my Kali virtual machine.
+I also learned that `eth0` is the network interface used by my Kali
+virtual machine.
 
 The machine had an address similar to:
 
@@ -521,9 +519,9 @@ address were part of the virtual machine's network environment.
 
 `ss` means **Socket Statistics**.
 
-It can show network sockets and listening services.
+I learned that it can show network sockets and listening services.
 
-We used:
+I used:
 
 ```bash
 ss -ltnp
@@ -538,7 +536,7 @@ The options mean:
 -p = show the process using the socket
 ```
 
-We specifically used:
+I specifically used:
 
 ```bash
 ss -ltnp | grep 9999
@@ -548,17 +546,18 @@ because Autopsy reported that it was using port `9999`.
 
 The command returned no output.
 
-That meant there was no TCP service listening on port `9999` at that
-moment, which helped us investigate why the Autopsy web interface was
-refusing the connection.
+I learned that this meant there was no TCP service listening on port
+`9999` at that moment, which helped me investigate why the Autopsy
+web interface was refusing the connection.
 
 ---
 
 # 13. Shell Scripts
 
-A file ending in `.sh` is commonly used for a **shell script**.
+I learned that a file ending in `.sh` is commonly used for a **shell
+script**.
 
-A shell is a program that allows a user to interact with the operating
+A shell is a program that allows me to interact with the operating
 system by entering commands.
 
 On Kali Linux, a commonly used shell is **Bash (Bourne Again SHell)**.
@@ -573,14 +572,14 @@ ls -la
 echo "Linux practice"
 ```
 
-The purpose of `commands.sh` in this lab is to keep a record of the Linux
-commands I practiced.
+The purpose of `commands.sh` in this lab is to keep a record of the
+Linux commands I practiced.
 
 ---
 
 # What I Learned
 
-The main concepts covered in this lab were:
+Through this lab, I learned about:
 
 * Linux filesystem structure
 * Navigating directories
@@ -600,9 +599,8 @@ The main concepts covered in this lab were:
 * Listening ports and sockets
 * Shell scripts
 
-These concepts form a foundation for later cybersecurity work involving
-Linux systems, network analysis, logs, services, and security
-investigations.
+These concepts give me a foundation for later cybersecurity work involving
+Linux systems, network analysis, logs, services, and security investigations.
 
 ```
 ```
